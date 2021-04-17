@@ -3,7 +3,7 @@
 	"name": "Stopwatch Plugin",
 	"version": "0.0.1",
 	"minAppVersion": "0.9.12",
-	"description": "Provide stopwatch on Obsidian!",
+	"description": "Display stopwatch on Obsidian!",
 	"author": "Tokuhiro Matsuno",
 	"authorUrl": "https://obsidian.md/about",
 	"isDesktopOnly": false
