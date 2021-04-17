@@ -96,7 +96,7 @@ class SampleSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+		containerEl.createEl('h2', {text: 'Settings for stopwatch plugin.'});
 
 		new Setting(containerEl)
 			.setName('Stopwatch refresh interval')
