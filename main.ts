@@ -184,7 +184,7 @@ class StopWatchView extends ItemView {
 		});
 	}
 
-	private start() {
+	start() {
 		this.model.start()
 		this.startStopButton.textContent = "Pause";
 		this.interval = window.setInterval(() => {
@@ -193,13 +193,13 @@ class StopWatchView extends ItemView {
 		this.registerInterval(this.interval);
 	}
 
-	private stop() {
+	stop() {
 		this.startStopButton.textContent = "Start";
 		window.clearInterval(this.interval);
 		this.model.stop();
 	}
 
-	private reset() {
+	reset() {
 		this.startStopButton.textContent = "Start";
 		this.model.reset();
 		window.clearInterval(this.interval);
