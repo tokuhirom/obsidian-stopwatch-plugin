@@ -1,7 +1,3 @@
-/* Sets all the text color to red! */
-body {
-    color: red;
-}
 .stopwatch-time {
     font-size: 180%;
     margin-bottom: 10px;

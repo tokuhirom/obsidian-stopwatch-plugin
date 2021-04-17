@@ -1,18 +1,20 @@
 import {App, ItemView, Plugin, PluginSettingTab, Setting, WorkspaceLeaf} from 'obsidian';
 
 interface MyPluginSettings {
-	mySetting: string;
+	interval: number,
+	showMilliSeconds: boolean
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+	interval: 100,
+	showMilliSeconds: true
 }
 
 const VIEW_TYPE_STOPWATCH = 'online.tokuhirom.obsidian-stopwatch-plugin';
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
-	private view: StopWatchView;
+	view: StopWatchView;
 
 	async onload() {
 		console.log('loading stopwatch plugin');
@@ -24,7 +26,7 @@ export default class MyPlugin extends Plugin {
 		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
 
 		this.registerView(VIEW_TYPE_STOPWATCH, (leaf: WorkspaceLeaf) => {
-			this.view = new StopWatchView(leaf, this);
+			this.view = new StopWatchView(leaf, this, new StopwatchModel());
 			return this.view;
 		});
 
@@ -33,7 +35,6 @@ export default class MyPlugin extends Plugin {
 			// await this.prepareIndex();
 		} else {
 			this.registerEvent(this.app.workspace.on('layout-ready', this.initLeaf.bind(this)));
-			// this.registerEvent(this.app.workspace.on('layout-ready', async () => await this.prepareIndex()));
 		}
 	}
 
@@ -76,16 +77,25 @@ class SampleSettingTab extends PluginSettingTab {
 		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
+			.setName('Stopwatch refresh interval')
 			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue('')
+				.setPlaceholder('Stopwatch refresh interval')
+				.setValue(this.plugin.settings.interval.toString())
 				.onChange(async (value) => {
-					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
+					this.plugin.settings.interval = parseInt(value, 10);
 					await this.plugin.saveSettings();
 				}));
+
+		new Setting(containerEl)
+				.setName('Show milliseconds')
+				.addToggle(component => {
+					component.setValue(this.plugin.settings.showMilliSeconds)
+							.onChange(async (value) => {
+								this.plugin.settings.showMilliSeconds = value;
+								this.plugin.view.renderCurrentTime()
+								await this.plugin.saveSettings();
+							})
+				});
 	}
 }
 
@@ -95,19 +105,16 @@ enum StopwatchState {
 
 class StopWatchView extends ItemView {
 	private startStopButton: HTMLButtonElement;
-	private state: StopwatchState;
-	private startedAt: Date;
 	private plugin: MyPlugin;
-	private interval: number;
 	private timeDiv: HTMLDivElement;
 	private resetButton: HTMLButtonElement;
-	private pausedOffset: number;
+	private model: StopwatchModel;
+	private interval: number;
 
-	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
+	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin, model: StopwatchModel) {
 		super(leaf);
 		this.plugin = plugin;
-		this.state = StopwatchState.INITIALIZED;
-		this.pausedOffset = 0;
+		this.model = model;
 	}
 
 	getDisplayText(): string {
@@ -129,7 +136,7 @@ class StopWatchView extends ItemView {
 		const dom = (this as any).contentEl as HTMLElement;
 
 		this.timeDiv = dom.createEl('div', {
-			text: '00:00:00.00'
+			text: ''
 		});
 		this.startStopButton = dom.createEl('button', {
 			text: 'Start',
@@ -138,60 +145,84 @@ class StopWatchView extends ItemView {
 			text: 'Reset',
 		});
 		this.timeDiv.addClass("stopwatch-time");
+		this.renderCurrentTime()
 
 		this.startStopButton.onClickEvent((e) => {
-			console.log("CLICK!");
-			console.log(e);
-			if (this.state == StopwatchState.STARTED) {
+			if (this.model.state == StopwatchState.STARTED) {
 				// stop the timer
 				this.startStopButton.textContent = "Start";
 				window.clearInterval(this.interval);
-				this.pausedOffset = (new Date()).getTime() - this.startedAt.getTime() + this.pausedOffset;
-				this.state = StopwatchState.STOPPED;
+				this.model.stop();
 			} else {
 				// start the timer
-				this.state = StopwatchState.STARTED;
+				this.model.start()
 				this.startStopButton.textContent = "Pause";
-				this.startedAt = new Date();
 				this.interval = window.setInterval(() => {
-					this.renderCurrentTime();
-				}, 10);
-				this.plugin.registerInterval(this.interval) // make interval configurable
+					this.renderCurrentTime()
+				}, this.plugin.settings.interval);
+				this.registerInterval(this.interval);
 			}
 			return true;
 		});
 		this.resetButton.onClickEvent((e) => {
-			this.state = StopwatchState.INITIALIZED;
-			this.startedAt = null;
+			this.model.reset();
 			window.clearInterval(this.interval);
 			this.interval = null;
-			this.pausedOffset = 0;
 			this.renderCurrentTime();
 		});
 	}
 
-	private renderCurrentTime() {
-		const cur = new Date();
-		if (this.startedAt != null) {
-			const elapsed = (cur.getTime() - this.startedAt.getTime()) + this.pausedOffset; // in milli seconds
-
-			const h = Math.floor(elapsed/60/60/1000)
-			const m = Math.floor((elapsed - h*60*60*1000)/60/1000)
-			const s = Math.floor((elapsed - h*60*60*1000 - m*60*1000)/1000)
-			const ms = Math.floor(elapsed - h*60*60*1000 - m*60*1000 - s*1000)
-			console.log(elapsed);
-
-			const hStr = ('0' + h).slice(-2);
-			const mStr = ('0' + m).slice(-2);
-			const sStr = ('0' + s).slice(-2);
-			const msStr = ('000' + ms).slice(-3);
-			this.timeDiv.textContent = hStr + ":" + mStr + ":" + sStr + "." + msStr;
-		} else {
-			this.timeDiv.textContent = "00:00:00.000";
-		}
+	renderCurrentTime() {
+		this.timeDiv.textContent = this.model.getCurrentTimeString(this.plugin.settings.showMilliSeconds);
 	}
 }
 
 class StopwatchModel {
+	private startedAt: Date;
+	private pausedOffset: number;
+	state: StopwatchState;
 
+	constructor() {
+		this.pausedOffset = 0;
+		this.state = StopwatchState.INITIALIZED;
+	}
+
+	getCurrentTimeString(renderMilliSec: boolean) {
+		const cur = new Date();
+		if (this.startedAt != null) {
+			const elapsed = (cur.getTime() - this.startedAt.getTime()) + this.pausedOffset; // in milli seconds
+			return this.getTimeString(elapsed, renderMilliSec);
+		} else {
+			return this.getTimeString(0, renderMilliSec);
+		}
+	}
+
+	getTimeString(elapsed: number, renderMilliSec: boolean) {
+		const h = Math.floor(elapsed/60/60/1000)
+		const m = Math.floor((elapsed - h*60*60*1000)/60/1000)
+		const s = Math.floor((elapsed - h*60*60*1000 - m*60*1000)/1000)
+		const ms = Math.floor(elapsed - h*60*60*1000 - m*60*1000 - s*1000)
+
+		const hStr = ('0' + h).slice(-2);
+		const mStr = ('0' + m).slice(-2);
+		const sStr = ('0' + s).slice(-2);
+		const msStr = ('000' + ms).slice(-3);
+		return hStr + ":" + mStr + ":" + sStr + ( renderMilliSec ? "." + msStr : '');
+	}
+
+	start() {
+		this.state = StopwatchState.STARTED;
+		this.startedAt = new Date();
+	}
+
+	reset() {
+		this.state = StopwatchState.INITIALIZED;
+		this.startedAt = null;
+		this.pausedOffset = 0;
+	}
+
+	stop() {
+		this.pausedOffset = (new Date()).getTime() - this.startedAt.getTime() + this.pausedOffset;
+		this.state = StopwatchState.STOPPED;
+	}
 }
