@@ -30,6 +30,28 @@ export default class MyPlugin extends Plugin {
 			return this.view;
 		});
 
+		this.addCommand({
+			id: 'start-stopwatch',
+			name: 'Start Stopwatch',
+			callback: () => {
+				this.view.start();
+			}
+		});
+		this.addCommand({
+			id: 'stop-stopwatch',
+			name: 'Stop Stopwatch',
+			callback: () => {
+				this.view.stop();
+			}
+		});
+		this.addCommand({
+			id: 'reset-stopwatch',
+			name: 'Reset Stopwatch',
+			callback: () => {
+				this.view.reset();
+			}
+		});
+
 		if (this.app.workspace.layoutReady) {
 			this.initLeaf();
 			// await this.prepareIndex();
@@ -150,26 +172,39 @@ class StopWatchView extends ItemView {
 		this.startStopButton.onClickEvent((e) => {
 			if (this.model.state == StopwatchState.STARTED) {
 				// stop the timer
-				this.startStopButton.textContent = "Start";
-				window.clearInterval(this.interval);
-				this.model.stop();
+				this.stop();
 			} else {
 				// start the timer
-				this.model.start()
-				this.startStopButton.textContent = "Pause";
-				this.interval = window.setInterval(() => {
-					this.renderCurrentTime()
-				}, this.plugin.settings.interval);
-				this.registerInterval(this.interval);
+				this.start();
 			}
 			return true;
 		});
 		this.resetButton.onClickEvent((e) => {
-			this.model.reset();
-			window.clearInterval(this.interval);
-			this.interval = null;
-			this.renderCurrentTime();
+			this.reset();
 		});
+	}
+
+	private start() {
+		this.model.start()
+		this.startStopButton.textContent = "Pause";
+		this.interval = window.setInterval(() => {
+			this.renderCurrentTime()
+		}, this.plugin.settings.interval);
+		this.registerInterval(this.interval);
+	}
+
+	private stop() {
+		this.startStopButton.textContent = "Start";
+		window.clearInterval(this.interval);
+		this.model.stop();
+	}
+
+	private reset() {
+		this.startStopButton.textContent = "Start";
+		this.model.reset();
+		window.clearInterval(this.interval);
+		this.interval = null;
+		this.renderCurrentTime();
 	}
 
 	renderCurrentTime() {
@@ -215,14 +250,14 @@ class StopwatchModel {
 		this.startedAt = new Date();
 	}
 
+	stop() {
+		this.pausedOffset = (new Date()).getTime() - this.startedAt.getTime() + this.pausedOffset;
+		this.state = StopwatchState.STOPPED;
+	}
+
 	reset() {
 		this.state = StopwatchState.INITIALIZED;
 		this.startedAt = null;
 		this.pausedOffset = 0;
-	}
-
-	stop() {
-		this.pausedOffset = (new Date()).getTime() - this.startedAt.getTime() + this.pausedOffset;
-		this.state = StopwatchState.STOPPED;
 	}
 }
