@@ -2,3 +2,7 @@
 body {
     color: red;
 }
+.stopwatch-time {
+    font-size: 180%;
+    margin-bottom: 10px;
+}
