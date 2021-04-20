@@ -174,7 +174,7 @@ class StopWatchView extends ItemView {
 	}
 
 	async onOpen(): Promise<void> {
-		const dom = (this as any).contentEl as HTMLElement;
+		const dom = this.contentEl;
 
 		this.timeDiv = dom.createEl('div', {
 			text: ''
