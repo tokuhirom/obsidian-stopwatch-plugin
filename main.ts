@@ -1,19 +1,19 @@
 import {App, ItemView, Plugin, PluginSettingTab, Setting, WorkspaceLeaf} from 'obsidian';
 
-interface MyPluginSettings {
+interface StopwatchPluginSettings {
 	interval: number,
 	showMilliSeconds: boolean
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
+const DEFAULT_SETTINGS: StopwatchPluginSettings = {
 	interval: 100,
 	showMilliSeconds: true
 }
 
 const VIEW_TYPE_STOPWATCH = 'online.tokuhirom.obsidian-stopwatch-plugin';
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class StopwatchPlugin extends Plugin {
+	settings: StopwatchPluginSettings;
 	view: StopWatchView;
 
 	async onload() {
@@ -21,7 +21,7 @@ export default class MyPlugin extends Plugin {
 
 		await this.loadSettings();
 
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new StopwatchSettingTab(this.app, this));
 
 		this.addCommand({
 			id: 'start-stopwatch',
@@ -50,12 +50,7 @@ export default class MyPlugin extends Plugin {
 			return this.view;
 		});
 
-		if (this.app.workspace.layoutReady) {
-			this.initLeaf();
-			// await this.prepareIndex();
-		} else {
-			this.registerEvent(this.app.workspace.on('layout-ready', this.initLeaf.bind(this)));
-		}
+		this.app.workspace.onLayoutReady(() => this.initLeaf.bind(this))
 	}
 
 	onunload() {
@@ -81,10 +76,10 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+class StopwatchSettingTab extends PluginSettingTab {
+	plugin: StopwatchPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: StopwatchPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -125,13 +120,13 @@ enum StopwatchState {
 
 class StopWatchView extends ItemView {
 	private startStopButton: HTMLButtonElement;
-	private plugin: MyPlugin;
+	private plugin: StopwatchPlugin;
 	private timeDiv: HTMLDivElement;
 	private resetButton: HTMLButtonElement;
 	private model: StopwatchModel;
 	private interval: number;
 
-	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin, model: StopwatchModel) {
+	constructor(leaf: WorkspaceLeaf, plugin: StopwatchPlugin, model: StopwatchModel) {
 		super(leaf);
 		this.plugin = plugin;
 		this.model = model;
@@ -146,10 +141,6 @@ class StopWatchView extends ItemView {
 	}
 	getIcon(): string {
 		return 'clock';
-	}
-
-	onClose(): Promise<void> {
-		return Promise.resolve();
 	}
 
 	async onOpen(): Promise<void> {
