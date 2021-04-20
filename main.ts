@@ -177,7 +177,8 @@ class StopWatchView extends ItemView {
 		const dom = this.contentEl;
 
 		this.timeDiv = dom.createEl('div', {
-			text: ''
+			text: '',
+			cls: 'stopwatch-time'
 		});
 		this.startStopButton = dom.createEl('button', {
 			text: 'Start',
@@ -185,7 +186,6 @@ class StopWatchView extends ItemView {
 		this.resetButton = dom.createEl('button', {
 			text: 'Reset',
 		});
-		this.timeDiv.addClass("stopwatch-time");
 		this.renderCurrentTime()
 
 		this.startStopButton.onClickEvent((e) => {
