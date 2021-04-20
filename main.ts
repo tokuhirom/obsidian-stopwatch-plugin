@@ -36,20 +36,29 @@ export default class StopwatchPlugin extends Plugin {
 			name: 'Start Stopwatch',
 			callback: () => {
 				this.view.start();
+			},
+			checkCallback(checking) {
+				return this.view != null
 			}
 		});
 		this.addCommand({
 			id: 'stop-stopwatch',
 			name: 'Stop Stopwatch',
-			callback: () => {
+			callback() {
 				this.view.stop();
+			},
+			checkCallback(checking) {
+				return this.view != null
 			}
 		});
 		this.addCommand({
 			id: 'reset-stopwatch',
 			name: 'Reset Stopwatch',
-			callback: () => {
+			callback() {
 				this.view.reset();
+			},
+			checkCallback(checking) {
+				return this.view != null
 			}
 		});
 
