@@ -23,13 +23,6 @@ export default class MyPlugin extends Plugin {
 
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
-
-		this.registerView(VIEW_TYPE_STOPWATCH, (leaf: WorkspaceLeaf) => {
-			this.view = new StopWatchView(leaf, this, new StopwatchModel());
-			return this.view;
-		});
-
 		this.addCommand({
 			id: 'start-stopwatch',
 			name: 'Start Stopwatch',
@@ -50,6 +43,11 @@ export default class MyPlugin extends Plugin {
 			callback: () => {
 				this.view.reset();
 			}
+		});
+
+		this.registerView(VIEW_TYPE_STOPWATCH, (leaf: WorkspaceLeaf) => {
+			this.view = new StopWatchView(leaf, this, new StopwatchModel());
+			return this.view;
 		});
 
 		if (this.app.workspace.layoutReady) {
