@@ -1,13 +1,21 @@
 import {App, ItemView, Plugin, PluginSettingTab, Setting, WorkspaceLeaf} from 'obsidian';
 
+// @ts-ignore
+import moment from "moment";
+
+// @ts-ignore
+import momentDurationFormatSetup from "moment-duration-format";
+
+momentDurationFormatSetup(moment)
+
 interface StopwatchPluginSettings {
 	interval: number,
-	showMilliSeconds: boolean
+	format: string
 }
 
 const DEFAULT_SETTINGS: StopwatchPluginSettings = {
 	interval: 100,
-	showMilliSeconds: true
+	format: 'hh:mm:ss.SSS'
 }
 
 const VIEW_TYPE_STOPWATCH = 'online.tokuhirom.obsidian-stopwatch-plugin';
@@ -50,7 +58,7 @@ export default class StopwatchPlugin extends Plugin {
 			return this.view;
 		});
 
-		this.app.workspace.onLayoutReady(() => this.initLeaf.bind(this))
+		this.app.workspace.onLayoutReady(this.initLeaf.bind(this))
 	}
 
 	onunload() {
@@ -101,16 +109,19 @@ class StopwatchSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
-		new Setting(containerEl)
-				.setName('Show milliseconds')
-				.addToggle(component => {
-					component.setValue(this.plugin.settings.showMilliSeconds)
+		const formatSetting = new Setting(containerEl)
+				.setName('Time Format')
+				.addText(component => {
+					component.setValue(this.plugin.settings.format)
+							.setPlaceholder('hh:mm:ss.SSS')
 							.onChange(async (value) => {
-								this.plugin.settings.showMilliSeconds = value;
+								this.plugin.settings.format = value;
 								this.plugin.view.renderCurrentTime()
 								await this.plugin.saveSettings();
 							})
 				});
+		formatSetting.descEl.innerHTML = "For more syntax, refer to " +
+				"<a href='https://github.com/jsmreese/moment-duration-format#template-string'>format reference</a>"
 	}
 }
 
@@ -197,7 +208,7 @@ class StopWatchView extends ItemView {
 	}
 
 	renderCurrentTime() {
-		this.timeDiv.textContent = this.model.getCurrentTimeString(this.plugin.settings.showMilliSeconds);
+		this.timeDiv.textContent = this.model.getCurrentTimeString(this.plugin.settings.format);
 	}
 }
 
@@ -211,27 +222,20 @@ class StopwatchModel {
 		this.state = StopwatchState.INITIALIZED;
 	}
 
-	getCurrentTimeString(renderMilliSec: boolean) {
+	getCurrentTimeString(format: string) {
 		const cur = new Date();
 		if (this.startedAt != null) {
 			const elapsed = (cur.getTime() - this.startedAt.getTime()) + this.pausedOffset; // in milli seconds
-			return this.getTimeString(elapsed, renderMilliSec);
+			return this.getTimeString(elapsed, format);
 		} else {
-			return this.getTimeString(0, renderMilliSec);
+			return this.getTimeString(0, format);
 		}
 	}
 
-	getTimeString(elapsed: number, renderMilliSec: boolean) {
-		const h = Math.floor(elapsed/60/60/1000)
-		const m = Math.floor((elapsed - h*60*60*1000)/60/1000)
-		const s = Math.floor((elapsed - h*60*60*1000 - m*60*1000)/1000)
-		const ms = Math.floor(elapsed - h*60*60*1000 - m*60*1000 - s*1000)
-
-		const hStr = ('0' + h).slice(-2);
-		const mStr = ('0' + m).slice(-2);
-		const sStr = ('0' + s).slice(-2);
-		const msStr = ('000' + ms).slice(-3);
-		return hStr + ":" + mStr + ":" + sStr + ( renderMilliSec ? "." + msStr : '');
+	getTimeString(elapsed: number, format: string) {
+		return moment.duration(elapsed).format(format, {
+			trim: false
+		})
 	}
 
 	start() {
