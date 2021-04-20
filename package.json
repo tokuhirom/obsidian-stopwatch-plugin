@@ -1,6 +1,6 @@
 {
   "name": "obsidian-stopwatch-plugin",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "description": "This is a stopwatch plugin for Obsidian (https://obsidian.md)",
   "main": "main.js",
   "scripts": {
