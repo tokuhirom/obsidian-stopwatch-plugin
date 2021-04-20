@@ -110,11 +110,21 @@ class StopwatchSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Stopwatch refresh interval')
+			.setDesc('Valid value range is 1~1000')
 			.addText(text => text
 				.setPlaceholder('Stopwatch refresh interval')
 				.setValue(this.plugin.settings.interval.toString())
 				.onChange(async (value) => {
-					this.plugin.settings.interval = parseInt(value, 10);
+					try {
+						const i = parseInt(value.trim(), 10);
+						if (1000 >= i && i > 0) {
+							this.plugin.settings.interval = i
+							if (this.plugin.view != null) {
+								this.plugin.view.resetInterval()
+							}
+						}
+					} catch (e) {
+					}
 					await this.plugin.saveSettings();
 				}));
 
@@ -196,15 +206,14 @@ class StopWatchView extends ItemView {
 	start() {
 		this.model.start()
 		this.startStopButton.textContent = "Pause";
-		this.interval = window.setInterval(() => {
-			this.renderCurrentTime()
-		}, this.plugin.settings.interval);
+		this.interval = this.createInterval();
 		this.registerInterval(this.interval);
 	}
 
 	stop() {
 		this.startStopButton.textContent = "Start";
 		window.clearInterval(this.interval);
+		this.interval = null;
 		this.model.stop();
 	}
 
@@ -214,6 +223,19 @@ class StopWatchView extends ItemView {
 		window.clearInterval(this.interval);
 		this.interval = null;
 		this.renderCurrentTime();
+	}
+
+	resetInterval() {
+		if (this.interval != null) {
+			window.clearInterval(this.interval);
+			this.interval = this.createInterval()
+		}
+	}
+
+	createInterval() {
+		return window.setInterval(() => {
+			this.renderCurrentTime()
+		}, this.plugin.settings.interval)
 	}
 
 	renderCurrentTime() {
