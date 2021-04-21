@@ -31,34 +31,26 @@ export default class StopwatchPlugin extends Plugin {
 
 		this.addSettingTab(new StopwatchSettingTab(this.app, this));
 
+		const self = this;
+
 		this.addCommand({
-			id: 'start-stopwatch',
-			name: 'Start Stopwatch',
-			callback: () => {
-				this.view.start();
-			},
+			id: 'start-stop-stopwatch',
+			name: 'Start or Stop the Stopwatch',
 			checkCallback(checking) {
-				return this.view != null
-			}
-		});
-		this.addCommand({
-			id: 'stop-stopwatch',
-			name: 'Stop Stopwatch',
-			callback() {
-				this.view.stop();
-			},
-			checkCallback(checking) {
-				return this.view != null
+				if (checking) {
+					return self.app.workspace.getLeavesOfType(VIEW_TYPE_STOPWATCH).length>0 && self.view != null
+				}
+				self.view.startOrStop()
 			}
 		});
 		this.addCommand({
 			id: 'reset-stopwatch',
 			name: 'Reset Stopwatch',
-			callback() {
-				this.view.reset();
-			},
 			checkCallback(checking) {
-				return this.view != null
+				if (checking) {
+					return self.app.workspace.getLeavesOfType(VIEW_TYPE_STOPWATCH).length>0 && self.view != null
+				}
+				self.view.reset()
 			}
 		});
 
@@ -105,7 +97,6 @@ class StopwatchSettingTab extends PluginSettingTab {
 
 	display(): void {
 		let {containerEl} = this;
-		let p: HTMLElement = containerEl
 
 		containerEl.empty();
 
@@ -228,18 +219,20 @@ class StopWatchView extends ItemView {
 		this.renderCurrentTime()
 
 		this.startStopButton.onClickEvent((e) => {
-			if (this.model.state == StopwatchState.STARTED) {
-				// stop the timer
-				this.stop();
-			} else {
-				// start the timer
-				this.start();
-			}
+			this.startOrStop()
 			return true;
 		});
 		this.resetButton.onClickEvent((e) => {
 			this.reset();
 		});
+	}
+
+	startOrStop() {
+		if (this.model.state == StopwatchState.STARTED) {
+			this.stop();
+		} else {
+			this.start();
+		}
 	}
 
 	start() {
