@@ -2,3 +2,7 @@
     font-size: 180%;
     margin-bottom: 10px;
 }
+
+.settings-interval-alert {
+    color: red;
+}
