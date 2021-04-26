@@ -1,9 +1,7 @@
 import {App, ItemView, Plugin, PluginSettingTab, Setting, WorkspaceLeaf} from 'obsidian';
 
-// @ts-ignore
 import moment from "moment";
 
-// @ts-ignore
 import momentDurationFormatSetup from "moment-duration-format";
 
 momentDurationFormatSetup(moment)
@@ -24,34 +22,22 @@ export default class StopwatchPlugin extends Plugin {
 	settings: StopwatchPluginSettings;
 	view: StopWatchView;
 
-	async onload() {
+	async onload(): Promise<void> {
 		console.log('loading stopwatch plugin');
 
 		await this.loadSettings();
 
 		this.addSettingTab(new StopwatchSettingTab(this.app, this));
 
-		const self = this;
-
 		this.addCommand({
 			id: 'start-stop-stopwatch',
 			name: 'Start or Stop the Stopwatch',
-			checkCallback(checking) {
-				if (checking) {
-					return self.app.workspace.getLeavesOfType(VIEW_TYPE_STOPWATCH).length>0 && self.view != null
-				}
-				self.view.startOrStop()
-			}
+			checkCallback: this.onStartOrStop.bind(this)
 		});
 		this.addCommand({
 			id: 'reset-stopwatch',
 			name: 'Reset Stopwatch',
-			checkCallback(checking) {
-				if (checking) {
-					return self.app.workspace.getLeavesOfType(VIEW_TYPE_STOPWATCH).length>0 && self.view != null
-				}
-				self.view.reset()
-			}
+			checkCallback: this.onReset.bind(this)
 		});
 
 		this.registerView(VIEW_TYPE_STOPWATCH, (leaf: WorkspaceLeaf) => {
@@ -62,7 +48,21 @@ export default class StopwatchPlugin extends Plugin {
 		this.app.workspace.onLayoutReady(this.initLeaf.bind(this))
 	}
 
-	onunload() {
+	onStartOrStop(checking: boolean): boolean {
+		if (checking) {
+			return this.app.workspace.getLeavesOfType(VIEW_TYPE_STOPWATCH).length>0 && this.view != null
+		}
+		this.view.startOrStop()
+	}
+
+	onReset(checking: boolean): boolean {
+		if (checking) {
+			return this.app.workspace.getLeavesOfType(VIEW_TYPE_STOPWATCH).length>0 && this.view != null
+		}
+		this.view.reset()
+	}
+
+	onunload(): void {
 		console.log('unloading plugin');
 		this.app.workspace.getLeavesOfType(VIEW_TYPE_STOPWATCH).forEach((leaf) => leaf.detach());
 	}
@@ -76,11 +76,11 @@ export default class StopwatchPlugin extends Plugin {
 		});
 	}
 
-	async loadSettings() {
+	async loadSettings(): Promise<void> {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
-	async saveSettings() {
+	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
 	}
 }
@@ -96,7 +96,7 @@ class StopwatchSettingTab extends PluginSettingTab {
 	}
 
 	display(): void {
-		let {containerEl} = this;
+		const {containerEl} = this;
 
 		containerEl.empty();
 
@@ -115,7 +115,7 @@ class StopwatchSettingTab extends PluginSettingTab {
 						.setValue(this.plugin.settings.interval.toString())
 						.onChange(async (value) => {
 							try {
-								const i = this.parseIntervalValue(value.trim());
+								const i = StopwatchSettingTab.parseIntervalValue(value.trim());
 								console.log(`interval set to ${i}`)
 								this.plugin.settings.interval = i
 								await this.plugin.saveSettings();
@@ -125,12 +125,12 @@ class StopwatchSettingTab extends PluginSettingTab {
 								}
 							} catch (e) {
 								console.log(e)
-								this.showIntervalAlert(setting, e.toString())
+								StopwatchSettingTab.showIntervalAlert(setting, e.toString())
 							}
 						}));
 	}
 
-	private parseIntervalValue(src: string) {
+	private static parseIntervalValue(src: string) {
 		const value = src.trim()
 		if (!value.match(/^[0-9]+$/)) {
 			throw Error("Value should be an integer")
@@ -143,7 +143,7 @@ class StopwatchSettingTab extends PluginSettingTab {
 		}
 	}
 
-	private showIntervalAlert(setting: Setting, message: string) {
+	private static showIntervalAlert(setting: Setting, message: string) {
 		setting.descEl.empty()
 		const container = setting.descEl.createDiv()
 		const note = setting.descEl.createDiv()
@@ -218,11 +218,11 @@ class StopWatchView extends ItemView {
 		});
 		this.renderCurrentTime()
 
-		this.startStopButton.onClickEvent((e) => {
+		this.startStopButton.onClickEvent(() => {
 			this.startOrStop()
 			return true;
 		});
-		this.resetButton.onClickEvent((e) => {
+		this.resetButton.onClickEvent(() => {
 			this.reset();
 		});
 	}
