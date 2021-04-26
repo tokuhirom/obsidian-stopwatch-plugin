@@ -1,10 +1,10 @@
 {
-	"id": "obsidian-stopwatch-plugin",
-	"name": "Stopwatch Plugin",
-	"version": "0.0.6",
-	"minAppVersion": "0.9.12",
-	"description": "Display stopwatch on Obsidian!",
-	"author": "Tokuhiro Matsuno",
-	"authorUrl": "https://64p.org",
-	"isDesktopOnly": false
+  "id": "obsidian-stopwatch-plugin",
+  "name": "Stopwatch Plugin",
+  "version": "0.0.6",
+  "minAppVersion": "0.9.12",
+  "description": "Display stopwatch on Obsidian!",
+  "author": "Tokuhiro Matsuno",
+  "authorUrl": "https://64p.org",
+  "isDesktopOnly": false
 }
