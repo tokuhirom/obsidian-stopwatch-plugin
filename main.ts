@@ -27,7 +27,6 @@ const VIEW_TYPE_STOPWATCH = "online.tokuhirom.obsidian-stopwatch-plugin";
 
 export default class StopwatchPlugin extends Plugin {
   settings: StopwatchPluginSettings;
-  view: StopWatchView;
 
   async onload(): Promise<void> {
     console.log("loading stopwatch plugin");
@@ -48,31 +47,50 @@ export default class StopwatchPlugin extends Plugin {
     });
 
     this.registerView(VIEW_TYPE_STOPWATCH, (leaf: WorkspaceLeaf) => {
-      this.view = new StopWatchView(leaf, this);
-      return this.view;
+      return new StopWatchView(leaf, this);
     });
 
     this.app.workspace.onLayoutReady(this.initLeaf.bind(this));
   }
 
   onStartOrStop(checking: boolean): boolean {
+    const view = this.getView();
+
     if (checking) {
-      return (
-        this.app.workspace.getLeavesOfType(VIEW_TYPE_STOPWATCH).length > 0 &&
-        this.view != null
-      );
+      return view !== null;
     }
-    this.view.startOrStop();
+
+    if (view !== null) {
+      view.startOrStop();
+      return true;
+    } else {
+      return false;
+    }
   }
 
   onReset(checking: boolean): boolean {
+    const view = this.getView();
     if (checking) {
-      return (
-        this.app.workspace.getLeavesOfType(VIEW_TYPE_STOPWATCH).length > 0 &&
-        this.view != null
-      );
+      return view !== null;
     }
-    this.view.reset();
+
+    if (view !== null) {
+      this.getView().reset();
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  getView(): StopWatchView {
+    const leaf = this.app.workspace
+      .getLeavesOfType(VIEW_TYPE_STOPWATCH)
+      .first();
+    if (leaf !== null && leaf.view instanceof StopWatchView) {
+      return leaf.view;
+    } else {
+      return null;
+    }
   }
 
   onunload(): void {
@@ -136,8 +154,9 @@ class StopwatchSettingTab extends PluginSettingTab {
               this.plugin.settings.interval = i;
               await this.plugin.saveSettings();
               setting.descEl.textContent = SETTING_INTERVAL_DESC;
-              if (this.plugin.view != null) {
-                this.plugin.view.resetInterval();
+              const view = this.plugin.getView();
+              if (view != null) {
+                view.resetInterval();
               }
             } catch (e) {
               console.log(e);
@@ -183,7 +202,7 @@ class StopwatchSettingTab extends PluginSettingTab {
           .setPlaceholder("hh:mm:ss.SSS")
           .onChange(async (value) => {
             this.plugin.settings.format = value;
-            this.plugin.view.renderCurrentTime();
+            this.plugin.getView().renderCurrentTime();
             await this.plugin.saveSettings();
           });
       });
