@@ -1,5 +1,5 @@
 import moment from "moment";
-import {StopwatchState} from "./StopwatchState";
+import { StopwatchState } from "./StopwatchState";
 
 export class StopwatchModel {
   private startedAt: Date;

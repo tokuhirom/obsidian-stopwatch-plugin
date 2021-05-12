@@ -2,7 +2,7 @@ import { ItemView, WorkspaceLeaf } from "obsidian";
 import { StopwatchModel } from "./StopwatchModel";
 import { VIEW_TYPE_STOPWATCH } from "../Constants";
 import StopwatchPlugin from "../../main";
-import {StopwatchState} from "./StopwatchState";
+import { StopwatchState } from "./StopwatchState";
 
 export class StopWatchView extends ItemView {
   private startStopButton: HTMLButtonElement;
