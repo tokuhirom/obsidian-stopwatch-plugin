@@ -3,7 +3,7 @@ import { Plugin, WorkspaceLeaf } from "obsidian";
 import moment from "moment";
 
 import momentDurationFormatSetup from "moment-duration-format";
-import {VIEW_TYPE_STOPWATCH, VIEW_TYPE_TIMER} from "./src/Constants";
+import { VIEW_TYPE_STOPWATCH } from "./src/Constants";
 import { StopwatchPluginSettings } from "./src/Settings";
 import { StopWatchView } from "./src/stopwatch/StopwatchView";
 import { StopwatchSettingTab } from "./src/StopwatchSettingTab";
@@ -72,21 +72,10 @@ export default class StopwatchPlugin extends Plugin {
     }
   }
 
-  getStopwatchView(): StopWatchView {
+  getView(): StopWatchView {
     const leaf = this.app.workspace
-        .getLeavesOfType(VIEW_TYPE_STOPWATCH)
-        .first();
-    if (leaf !== null && leaf.view instanceof StopWatchView) {
-      return leaf.view;
-    } else {
-      return null;
-    }
-  }
-
-  getTimerView(): StopWatchView {
-    const leaf = this.app.workspace
-        .getLeavesOfType(VIEW_TYPE_TIMER)
-        .first();
+      .getLeavesOfType(VIEW_TYPE_STOPWATCH)
+      .first();
     if (leaf !== null && leaf.view instanceof StopWatchView) {
       return leaf.view;
     } else {
