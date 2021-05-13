@@ -85,7 +85,6 @@ export class StopwatchSettingTab extends PluginSettingTab {
           .setPlaceholder("hh:mm:ss.SSS")
           .onChange(async (value) => {
             this.plugin.settings.format = value;
-            this.plugin.getView().renderCurrentTime();
             await this.plugin.saveSettings();
           });
       });
